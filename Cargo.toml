@@ -1,0 +1,23 @@
+[package]
+name = "gtm-04-pql-scoring"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Find the free accounts worth a sales call: product events to account features, explainable PQL scores (fit × usage), the 'aha moment' threshold that predicts retention, and feature adoption curves."
+repository = "https://github.com/braylo777/gtm-04-pql-scoring"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "gtm-04-pql-scoring"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "=1.0.154"
+
+[profile.release]
+opt-level = "s"
+lto = true
+panic = "abort"
+codegen-units = 1

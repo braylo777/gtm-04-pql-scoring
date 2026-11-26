@@ -1,0 +1,713 @@
+{
+ "stage": 4,
+ "repo": "gtm-04-pql-scoring",
+ "title": "PLG Telemetry & PQL Scoring",
+ "tagline": "Find the free accounts worth a sales call: product events to account features, explainable PQL scores (fit \u00d7 usage), the 'aha moment' threshold that predicts retention, and feature adoption curves.",
+ "why": "In product-led growth, the product does the first sales call. Most free users never pay, and sales cannot call them all. A Product Qualified Lead score tells sales which accounts already got value and fit the ideal customer profile. It only works if each point is explainable, the 'aha' threshold comes from real retention data, and the telemetry is clean (no duplicate retries, no orphan events).",
+ "covers": [
+  "Segment / RudderStack-style track stream to per-account features: event counts, distinct users, active days; duplicate messageId and orphan events counted",
+  "PQL score: capped points per feature, firmographic fit multipliers (range or set rules), threshold, next action, one reason per point",
+  "Aha-moment search: every threshold, retention above vs below, minimum group size, best lift, with a correlation-not-causation caution",
+  "Adoption curve: cumulative adoption % per week, day to 50%, median first-use day, features ranked"
+ ],
+ "gaps": [
+  "No live Segment / RudderStack / warehouse connection: events are synthetic JSON",
+  "Aha search is univariate (one action count); no multivariate model or significance test",
+  "Weights in the PQL model are set by hand; no model training from closed-won data"
+ ],
+ "ops": [
+  {
+   "op": "track_to_features",
+   "label": "Events \u2192 features",
+   "help": "Roll a track-event stream up to account features. One retried duplicate and one orphan event are in the sample.",
+   "input": {
+    "events": [
+     {
+      "type": "track",
+      "messageId": "m1",
+      "event": "dashboard_created",
+      "userId": "u1",
+      "day": 300,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m2",
+      "event": "report_shared",
+      "userId": "u1",
+      "day": 300,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m3",
+      "event": "dashboard_created",
+      "userId": "u2",
+      "day": 300,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m4",
+      "event": "report_shared",
+      "userId": "u2",
+      "day": 300,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m5",
+      "event": "dashboard_created",
+      "userId": "u3",
+      "day": 300,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m6",
+      "event": "report_shared",
+      "userId": "u3",
+      "day": 300,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m7",
+      "event": "dashboard_created",
+      "userId": "u1",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m8",
+      "event": "report_shared",
+      "userId": "u1",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m9",
+      "event": "integration_connected",
+      "userId": "u1",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m10",
+      "event": "dashboard_created",
+      "userId": "u2",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m11",
+      "event": "report_shared",
+      "userId": "u2",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m12",
+      "event": "integration_connected",
+      "userId": "u2",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m13",
+      "event": "dashboard_created",
+      "userId": "u3",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m14",
+      "event": "report_shared",
+      "userId": "u3",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m15",
+      "event": "integration_connected",
+      "userId": "u3",
+      "day": 301,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m16",
+      "event": "dashboard_created",
+      "userId": "u1",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m17",
+      "event": "report_shared",
+      "userId": "u1",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m18",
+      "event": "integration_connected",
+      "userId": "u1",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m19",
+      "event": "dashboard_created",
+      "userId": "u1",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m20",
+      "event": "dashboard_created",
+      "userId": "u2",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m21",
+      "event": "report_shared",
+      "userId": "u2",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m22",
+      "event": "integration_connected",
+      "userId": "u2",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m23",
+      "event": "dashboard_created",
+      "userId": "u2",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m24",
+      "event": "dashboard_created",
+      "userId": "u3",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m25",
+      "event": "report_shared",
+      "userId": "u3",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m26",
+      "event": "integration_connected",
+      "userId": "u3",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m27",
+      "event": "dashboard_created",
+      "userId": "u3",
+      "day": 302,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m28",
+      "event": "dashboard_created",
+      "userId": "u7",
+      "day": 300,
+      "context": {
+       "groupId": "acct_contoso"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m29",
+      "event": "dashboard_created",
+      "userId": "u7",
+      "day": 301,
+      "context": {
+       "groupId": "acct_contoso"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m30",
+      "event": "dashboard_created",
+      "userId": "u7",
+      "day": 302,
+      "context": {
+       "groupId": "acct_contoso"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m1",
+      "event": "dashboard_created",
+      "userId": "u1",
+      "day": 300,
+      "context": {
+       "groupId": "acct_northwind"
+      }
+     },
+     {
+      "type": "track",
+      "messageId": "m_orphan",
+      "event": "page_viewed",
+      "userId": "anon",
+      "day": 301
+     },
+     {
+      "type": "identify",
+      "userId": "u1"
+     }
+    ]
+   }
+  },
+  {
+   "op": "pql_score",
+   "label": "PQL score",
+   "help": "Score each account: usage points (capped per feature) \u00d7 fit multipliers. Accounts above the threshold alert an AE.",
+   "input": {
+    "pql_threshold": 60,
+    "usage_model": [
+     {
+      "feature": "active_users",
+      "points_per_unit": 6,
+      "max_points": 30
+     },
+     {
+      "feature": "dashboards_created",
+      "points_per_unit": 3,
+      "max_points": 20
+     },
+     {
+      "feature": "integrations_connected",
+      "points_per_unit": 10,
+      "max_points": 30
+     },
+     {
+      "feature": "reports_shared",
+      "points_per_unit": 2,
+      "max_points": 20
+     }
+    ],
+    "fit_model": [
+     {
+      "field": "employees",
+      "min": 100,
+      "max": 5000,
+      "multiplier_if_true": 1.2,
+      "multiplier_if_false": 0.6
+     },
+     {
+      "field": "industry",
+      "in": [
+       "SaaS",
+       "Fintech",
+       "Healthcare"
+      ],
+      "multiplier_if_false": 0.8
+     },
+     {
+      "field": "email_domain_type",
+      "in": [
+       "personal"
+      ],
+      "multiplier_if_true": 0.5
+     }
+    ],
+    "accounts": [
+     {
+      "account": "acct_northwind",
+      "employees": 420,
+      "industry": "SaaS",
+      "email_domain_type": "business",
+      "usage": {
+       "active_users": 3,
+       "dashboards_created": 9,
+       "integrations_connected": 3,
+       "reports_shared": 5
+      }
+     },
+     {
+      "account": "acct_contoso",
+      "employees": 1800,
+      "industry": "Healthcare",
+      "email_domain_type": "business",
+      "usage": {
+       "active_users": 1,
+       "dashboards_created": 3
+      }
+     },
+     {
+      "account": "acct_tailspin",
+      "employees": 40,
+      "industry": "SaaS",
+      "email_domain_type": "business",
+      "usage": {
+       "active_users": 6,
+       "dashboards_created": 12,
+       "integrations_connected": 2,
+       "reports_shared": 14
+      }
+     },
+     {
+      "account": "acct_gmail_user",
+      "employees": 1,
+      "industry": "Other",
+      "email_domain_type": "personal",
+      "usage": {
+       "active_users": 1,
+       "dashboards_created": 20,
+       "integrations_connected": 3
+      }
+     }
+    ]
+   }
+  },
+  {
+   "op": "aha_threshold",
+   "label": "Aha moment",
+   "help": "Find the first-week action count that best separates retained users from churned users (40 synthetic users).",
+   "input": {
+    "min_group": 6,
+    "users": [
+     {
+      "user": "u00",
+      "actions_in_window": 3,
+      "retained": false
+     },
+     {
+      "user": "u01",
+      "actions_in_window": 3,
+      "retained": false
+     },
+     {
+      "user": "u02",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u03",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u04",
+      "actions_in_window": 0,
+      "retained": false
+     },
+     {
+      "user": "u05",
+      "actions_in_window": 2,
+      "retained": true
+     },
+     {
+      "user": "u06",
+      "actions_in_window": 3,
+      "retained": true
+     },
+     {
+      "user": "u07",
+      "actions_in_window": 2,
+      "retained": true
+     },
+     {
+      "user": "u08",
+      "actions_in_window": 3,
+      "retained": true
+     },
+     {
+      "user": "u09",
+      "actions_in_window": 6,
+      "retained": true
+     },
+     {
+      "user": "u10",
+      "actions_in_window": 2,
+      "retained": false
+     },
+     {
+      "user": "u11",
+      "actions_in_window": 6,
+      "retained": false
+     },
+     {
+      "user": "u12",
+      "actions_in_window": 6,
+      "retained": true
+     },
+     {
+      "user": "u13",
+      "actions_in_window": 0,
+      "retained": false
+     },
+     {
+      "user": "u14",
+      "actions_in_window": 0,
+      "retained": false
+     },
+     {
+      "user": "u15",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u16",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u17",
+      "actions_in_window": 6,
+      "retained": true
+     },
+     {
+      "user": "u18",
+      "actions_in_window": 12,
+      "retained": true
+     },
+     {
+      "user": "u19",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u20",
+      "actions_in_window": 7,
+      "retained": true
+     },
+     {
+      "user": "u21",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u22",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u23",
+      "actions_in_window": 6,
+      "retained": true
+     },
+     {
+      "user": "u24",
+      "actions_in_window": 7,
+      "retained": true
+     },
+     {
+      "user": "u25",
+      "actions_in_window": 10,
+      "retained": true
+     },
+     {
+      "user": "u26",
+      "actions_in_window": 6,
+      "retained": false
+     },
+     {
+      "user": "u27",
+      "actions_in_window": 3,
+      "retained": true
+     },
+     {
+      "user": "u28",
+      "actions_in_window": 10,
+      "retained": true
+     },
+     {
+      "user": "u29",
+      "actions_in_window": 10,
+      "retained": true
+     },
+     {
+      "user": "u30",
+      "actions_in_window": 6,
+      "retained": true
+     },
+     {
+      "user": "u31",
+      "actions_in_window": 4,
+      "retained": false
+     },
+     {
+      "user": "u32",
+      "actions_in_window": 8,
+      "retained": true
+     },
+     {
+      "user": "u33",
+      "actions_in_window": 6,
+      "retained": false
+     },
+     {
+      "user": "u34",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u35",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u36",
+      "actions_in_window": 1,
+      "retained": false
+     },
+     {
+      "user": "u37",
+      "actions_in_window": 3,
+      "retained": true
+     },
+     {
+      "user": "u38",
+      "actions_in_window": 7,
+      "retained": true
+     },
+     {
+      "user": "u39",
+      "actions_in_window": 5,
+      "retained": true
+     }
+    ]
+   }
+  },
+  {
+   "op": "adoption_curve",
+   "label": "Adoption curve",
+   "help": "Cumulative feature adoption per week since launch for 20 eligible accounts.",
+   "input": {
+    "eligible_accounts": 20,
+    "horizon_days": 42,
+    "features": [
+     {
+      "feature": "AI summaries",
+      "first_use_days": [
+       0,
+       0,
+       1,
+       1,
+       2,
+       2,
+       3,
+       5,
+       6,
+       8,
+       9,
+       12,
+       15,
+       21,
+       30
+      ]
+     },
+     {
+      "feature": "Scheduled reports",
+      "first_use_days": [
+       2,
+       6,
+       9,
+       14,
+       15,
+       20,
+       28,
+       35
+      ]
+     },
+     {
+      "feature": "SSO",
+      "first_use_days": [
+       10,
+       25
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}
